@@ -12,6 +12,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,8 @@ import static org.hamcrest.Matchers.lessThan;
 
 public class HomeTask5 {
 
-
+    public static int employeeDetailsSize=0;
+    List<String> EmployeeDetails= new ArrayList<>();
     @DataProvider (name = "resources")
     public Object[][] resources(){
         return new Object[][] {{"/api/v1/employees"}};
@@ -40,24 +42,33 @@ public class HomeTask5 {
                 build();
     }
     @Test(dataProvider = "resources")
-    public int getResourceCount(String resGet){
+    public void getResourceCount(String resGet){
         RestAssured.defaultParser= Parser.JSON;
-        List<String> EmployeeDetails=when().
+        EmployeeDetails=when().
                  get(resGet).
                 then().extract().response().jsonPath().getList("data");
         System.out.println("Response Employee details: "+EmployeeDetails);
         System.out.println("Employees count: "+EmployeeDetails.size());
-        return EmployeeDetails.size();
+        employeeDetailsSize= EmployeeDetails.size();
     }
 
     @Test(dataProvider = "resources")
     public void createEmployee(String resGet) throws InterruptedException{
         RestAssured.defaultParser= Parser.JSON;
 
-            //int initialCount=getResourceCount(resGet);
-            given().body("{\"name\":\"testEmp\",\"salary\":\"1234\",\"age\":\"23\"}").when().post("/api/v1/create").path("data").toString();
-            int updatedCount=getResourceCount(resGet);
-            //Assert.assertEquals(initialCount+1,updatedCount);
+            getResourceCount(resGet);
+            int initial=EmployeeDetails.size();
+            given().body("{\n" +
+                    "            \"id\": 1,\n" +
+                    "            \"employee_name\": \"Tiger Nixon12\",\n" +
+                    "            \"employee_salary\": 320800,\n" +
+                    "            \"employee_age\": 61,\n" +
+                    "            \"profile_image\": \"\"\n" +
+                    "        }").when().post("/api/v1/create");
+
+            getResourceCount(resGet);
+            int updatedCount=EmployeeDetails.size();
+            Assert.assertEquals(updatedCount,initial+1);
     }
 
     @Test
